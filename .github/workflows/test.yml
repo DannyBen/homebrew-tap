@@ -82,7 +82,7 @@ jobs:
           formulae=()
           for path in "${paths[@]}"; do
             formula="${path##*/}"
-            formulae+=("${formula%.rb}")
+            formulae+=("dannyben/tap/${formula%.rb}")
           done
 
           joined=$(IFS=,; echo "${formulae[*]}")
