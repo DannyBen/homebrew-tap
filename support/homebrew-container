@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+image="homebrew/brew:main"
+tap_path="/home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/dannyben/homebrew-tap"
+project_path=$(CDPATH='' builtin cd "$(dirname "${BASH_SOURCE[0]}")/.." && builtin pwd -P)
+container_environment=(
+  --env HOMEBREW_NO_AUTO_UPDATE=1
+  --env HOMEBREW_NO_INSTALL_CLEANUP=1
+  --env HOMEBREW_NO_INSTALL_FROM_API=1
+)
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  support/homebrew-container check [FORMULA...]
+  support/homebrew-container outdated
+  support/homebrew-container update FORMULA VERSION
+  support/homebrew-container shell
+  support/homebrew-container shell --pristine
+USAGE
+}
+
+run_in_tap() {
+  local purpose="$1"
+  shift
+
+  docker run --rm --init \
+    --name "homebrew-tap-${purpose}-$$" \
+    "${container_environment[@]}" \
+    --workdir /work \
+    --volume "$project_path:/work" \
+    --volume "$project_path:$tap_path" \
+    "$image" \
+    "$@"
+}
+
+run_check() {
+  local formula="$1"
+  local name="homebrew-tap-check-${formula//[^a-zA-Z0-9_.-]/-}-$$"
+
+  docker run --rm --init \
+    --name "$name" \
+    "${container_environment[@]}" \
+    --workdir /work \
+    --volume "$project_path:/work" \
+    --volume "$project_path:$tap_path" \
+    "$image" \
+    bash -euc '
+      caption() { printf "\n\033[1;34m==> homebrew-tap: %s\033[0m\n" "$1"; }
+      formula="$1"
+      path="Formula/$formula.rb"
+
+      caption "styling $formula"
+      brew style "$path"
+      caption "auditing $formula"
+      brew audit --new --online "$formula"
+      caption "installing $formula"
+      brew install --build-from-source "$formula"
+      caption "testing $formula"
+      brew test "$formula"
+      caption "checking linkage for $formula"
+      brew linkage --test "$formula"
+    ' -- "$formula"
+}
+
+check() {
+  local -a formulae=("$@")
+
+  if ((${#formulae[@]} == 0)); then
+    shopt -s nullglob
+    local path
+    for path in "$project_path"/Formula/*.rb; do
+      formulae+=("$(basename "$path" .rb)")
+    done
+  fi
+
+  if ((${#formulae[@]} == 0)); then
+    echo "No formulae found in Formula/" >&2
+    exit 1
+  fi
+
+  local formula
+  for formula in "${formulae[@]}"; do
+    if [[ ! -f "$project_path/Formula/$formula.rb" ]]; then
+      echo "Formula not found: Formula/$formula.rb" >&2
+      exit 1
+    fi
+    run_check "$formula"
+  done
+
+  printf '\n\033[1;32mAll checks passed\033[0m\n'
+}
+
+outdated() {
+  run_in_tap outdated brew livecheck --formulae --newer-only --tap dannyben/tap
+}
+
+update() {
+  local formula=${1:-}
+  local version=${2:-}
+
+  if [[ -z $formula || -z $version || $# -ne 2 ]]; then
+    usage >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$project_path/Formula/$formula.rb" ]]; then
+    echo "Formula not found: Formula/$formula.rb" >&2
+    exit 1
+  fi
+
+  run_in_tap update \
+    brew bump-formula-pr \
+      --write-only \
+      --no-audit \
+      --version "$version" \
+      "$formula"
+
+  printf '\nFormula updated. Validate it with: op check %s\n' "$formula"
+}
+
+shell() {
+  local -a mounts=()
+  local prompt="homebrew-tap"
+
+  if [[ ${1:-} == "--pristine" ]]; then
+    prompt="homebrew"
+  elif [[ $# -gt 0 ]]; then
+    usage >&2
+    exit 1
+  else
+    mounts=(
+      --workdir /work
+      --volume "$project_path:/work"
+      --volume "$project_path:$tap_path"
+    )
+  fi
+
+  docker run --rm --init -it \
+    --name "homebrew-tap-shell-$$" \
+    "${container_environment[@]}" \
+    --env "PS1=\n\n$prompt $ " \
+    "${mounts[@]}" \
+    "$image" \
+    bash --norc
+}
+
+case ${1:-} in
+  check)
+    shift
+    check "$@"
+    ;;
+  outdated)
+    shift
+    if (($# > 0)); then
+      usage >&2
+      exit 1
+    fi
+    outdated
+    ;;
+  update)
+    shift
+    update "$@"
+    ;;
+  shell)
+    shift
+    shell "$@"
+    ;;
+  -h | --help | help | "")
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
