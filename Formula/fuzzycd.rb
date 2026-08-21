@@ -1,8 +1,8 @@
 class Fuzzycd < Formula
   desc "Patch cd with fuzzy directory history and interactive selection"
   homepage "https://github.com/DannyBen/fuzzycd"
-  url "https://github.com/DannyBen/fuzzycd/archive/refs/tags/v0.3.0.tar.gz"
-  sha256 "14a79058df6b416c6d4cb3654e70e9ccbdbd86f3fa8fa12a6730d8b41bb4f8a9"
+  url "https://github.com/DannyBen/fuzzycd/archive/refs/tags/v0.3.1.tar.gz"
+  sha256 "f38e4c8481012c4790ed157ea6eedd6aa0f76bf50b00d974d97d01db8dd2b3b6"
   license "MIT"
 
   depends_on "fzf"
