@@ -20,12 +20,13 @@ brew install opcode
 
 ## Formulae
 
-| Formula                                      | Description             |
-|:---------------------------------------------|:------------------------|
-| [alf](https://github.com/dannyben/alf)       | Manage Bash aliases     |
-| [fuzzycd](https://github.com/dannyben/fuzzycd) | Fuzzy directory changes |
-| [opcode](https://github.com/dannyben/opcode) | Local command shortcuts |
-| [rush](https://github.com/dannyben/rush)     | Personal package manager |
+| Formula                                          | Description                |
+|:-------------------------------------------------|:---------------------------|
+| [alf](https://github.com/dannyben/alf)           | Manage Bash aliases        |
+| [fuzzycd](https://github.com/dannyben/fuzzycd)   | Fuzzy directory changes    |
+| [opcode](https://github.com/dannyben/opcode)     | Local command shortcuts    |
+| [rush](https://github.com/dannyben/rush)         | Personal package manager   |
+| [shellkin](https://github.com/dannyben/shellkin) | BDD testing for shell CLIs |
 
 ## Development
 
