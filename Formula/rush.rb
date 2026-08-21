@@ -1,8 +1,8 @@
 class Rush < Formula
   desc "Manage and run packages from shell-script repositories"
   homepage "https://github.com/DannyBen/rush"
-  url "https://github.com/DannyBen/rush/archive/refs/tags/v1.0.1.tar.gz"
-  sha256 "439d2a4b6d0aeb099ba7de84ba90ac973ef421d48fb4c3d34f782abb2383f4a5"
+  url "https://github.com/DannyBen/rush/archive/refs/tags/v1.0.2.tar.gz"
+  sha256 "e3032527c94753a550cbdd045410503e1b0a0d13f07b9a1f866a729e0293f1ec"
   license "MIT"
 
   depends_on "bash"
@@ -11,8 +11,7 @@ class Rush < Formula
   def install
     bin.install "rush"
     man1.install Dir["doc/*.1"]
-    generate_completions_from_executable bin/"rush", "completions",
-                                         shell_parameter_format: :none, shells: [:bash]
+    generate_completions_from_executable bin/"rush", "completions", shells: [:bash, :zsh]
   end
 
   test do

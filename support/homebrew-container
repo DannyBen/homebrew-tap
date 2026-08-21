@@ -116,7 +116,7 @@ update() {
       --write-only \
       --no-audit \
       --version "$version" \
-      "$formula"
+      "dannyben/tap/$formula"
 
   printf '\nFormula updated. Validate it with: op check %s\n' "$formula"
 }
