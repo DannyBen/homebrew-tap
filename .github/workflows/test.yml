@@ -71,10 +71,11 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           shopt -s nullglob
-          paths=(Formula/*.rb)
+          tap_path=$(brew --repository dannyben/tap)
+          paths=("$tap_path"/Formula/*.rb)
 
           if (( ${#paths[@]} == 0 )); then
-            echo "No formulae found in Formula/"
+            echo "No formulae found in $tap_path/Formula/"
             exit 1
           fi
 
