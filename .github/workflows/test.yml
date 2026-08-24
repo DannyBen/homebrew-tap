@@ -6,8 +6,6 @@ on:
       - main
       - master
   pull_request:
-  # schedule:
-  #   - cron: "17 4 * * 6"
   workflow_dispatch:
 
 permissions: {}
@@ -21,18 +19,13 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
-    container: ${{ fromJSON(toJSON(matrix.container)) }} # zizmor: ignore[unpinned-images]
     strategy:
       fail-fast: false
       matrix:
         os:
+          - ubuntu-latest
           - macos-26
           - macos-15-intel
-        include:
-          - os: ubuntu-latest
-            container:
-              image: ghcr.io/homebrew/brew:main
-              options: --privileged
     permissions:
       actions: read
       checks: read
@@ -42,12 +35,12 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@b35a29a0f83ee8b8ca07b219fc8db3d7bb88ab49 # 2026.08.10.2
+        uses: Homebrew/actions/setup-homebrew@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Homebrew Bundler gems
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@main
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -71,7 +64,8 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           shopt -s nullglob
-          tap_path=$(brew --repository dannyben/tap)
+          tap="${GITHUB_REPOSITORY/homebrew-/}"
+          tap_path="${{ steps.set-up-homebrew.outputs.repository-path }}"
           paths=("$tap_path"/Formula/*.rb)
 
           if (( ${#paths[@]} == 0 )); then
@@ -82,7 +76,7 @@ jobs:
           formulae=()
           for path in "${paths[@]}"; do
             formula="${path##*/}"
-            formulae+=("dannyben/tap/${formula%.rb}")
+            formulae+=("$tap/${formula%.rb}")
           done
 
           joined=$(IFS=,; echo "${formulae[*]}")
@@ -93,10 +87,3 @@ jobs:
         run: >-
           brew test-bot --only-formulae
           --testing-formulae="${{ steps.all-formulae.outputs.formulae }}"
-
-      - name: Upload bottles as artifacts
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: bottles_${{ matrix.os }}
-          path: "*.bottle.*"
