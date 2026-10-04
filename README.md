@@ -23,6 +23,7 @@ brew install opcode
 | Formula                                          | Description                |
 |:-------------------------------------------------|:---------------------------|
 | [alf](https://github.com/dannyben/alf)           | Manage Bash aliases        |
+| [config](https://github.com/dannyben/config)   | Read and edit config files |
 | [fuzzycd](https://github.com/dannyben/fuzzycd)   | Fuzzy directory changes    |
 | [opcode](https://github.com/dannyben/opcode)     | Local command shortcuts    |
 | [rush](https://github.com/dannyben/rush)         | Personal package manager   |
