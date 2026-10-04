@@ -7,7 +7,6 @@ project_path=$(CDPATH='' builtin cd "$(dirname "${BASH_SOURCE[0]}")/.." && built
 container_environment=(
   --env HOMEBREW_NO_AUTO_UPDATE=1
   --env HOMEBREW_NO_INSTALL_CLEANUP=1
-  --env HOMEBREW_NO_INSTALL_FROM_API=1
 )
 
 usage() {
@@ -47,10 +46,20 @@ run_check() {
     --volume "$project_path:$tap_path" \
     "$image" \
     bash -euc '
-      caption() { printf "\n\033[1;34m==> homebrew-tap: %s\033[0m\n" "$1"; }
+      caption() {
+        stage="$1"
+        printf "\n\033[1;34m==> homebrew-tap: %s\033[0m\n" "$stage"
+      }
+      failure() {
+        local status=$?
+        printf "\n\033[1;31m==> homebrew-tap: FAILED: %s (exit %s)\033[0m\n" "$stage" "$status" >&2
+        exit "$status"
+      }
       formula="$1"
       path="Formula/$formula.rb"
       qualified="dannyben/tap/$formula"
+      stage="starting $formula"
+      trap failure ERR
 
       caption "styling $formula"
       brew style "$path"
@@ -81,13 +90,19 @@ check() {
     exit 1
   fi
 
-  local formula
+  local formula status
   for formula in "${formulae[@]}"; do
     if [[ ! -f "$project_path/Formula/$formula.rb" ]]; then
       echo "Formula not found: Formula/$formula.rb" >&2
       exit 1
     fi
-    run_check "$formula"
+    if run_check "$formula"; then
+      continue
+    else
+      status=$?
+      printf '\n\033[1;31mChecks FAILED for %s (exit %s)\033[0m\n' "$formula" "$status" >&2
+      return "$status"
+    fi
   done
 
   printf '\n\033[1;32mAll checks passed\033[0m\n'

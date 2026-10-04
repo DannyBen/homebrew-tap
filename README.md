@@ -27,6 +27,7 @@ brew install opcode
 | [opcode](https://github.com/dannyben/opcode)     | Local command shortcuts    |
 | [rush](https://github.com/dannyben/rush)         | Personal package manager   |
 | [shellkin](https://github.com/dannyben/shellkin) | BDD testing for shell CLIs |
+| [todo](https://github.com/dannyben/todo)         | Project todo list          |
 
 ## Development
 
@@ -44,7 +45,7 @@ op pristine
 
 `op check` gives each formula its own clean `homebrew/brew:main` container and
 runs `brew style`, `brew audit --new --online`, a source install, `brew test`,
-and `brew linkage --test`.
+and `brew linkage --test`. Dependencies use Homebrew's current API catalog.
 
 `op outdated` checks the tap with Homebrew Livecheck. To update a formula,
 provide the reviewed upstream version explicitly:
